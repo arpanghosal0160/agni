@@ -1,6 +1,6 @@
 import speech_recognition as sr
 from core.weather import get_weather
-from core.news import get_news
+from core.news import get_news, categorize_news, summarize_text
 from core.ai_tasks import answer_question
 from core.desktop_ops import open_file, search_files
 
@@ -25,9 +25,13 @@ def recognize_speech():
             print(f"You said: {command}")
             return command.lower()
         except sr.UnknownValueError:
-            return "Sorry, I didn't catch that."
+            print("Sorry, I didn't catch that.")
         except sr.RequestError:
-            return "Speech recognition service is unavailable."
+            print("Speech recognition service is unavailable.")
+        
+        # If speech recognition fails, prompt the user to enter the command manually
+        command = input("Please enter your command: ")
+        return command.lower()
 
 def interpret_and_execute(command):
     if "weather" in command:
@@ -35,10 +39,14 @@ def interpret_and_execute(command):
         weather = get_weather(city)
         print(f"Weather in {city}: {weather}")
     elif "news" in command:
-        news = get_news()
-        print("Top News:")
+        query = input("What kind of news are you interested in? ")
+        category = categorize_news(query)
+        news = get_news(category)
+        print(f"Top {category.capitalize()} News:")
         for article in news:
             print(f"- {article['title']}")
+            summary = summarize_text(article['description'])
+            print(f"Summary: {summary}")
     elif "question" in command or "ai" in command:
         query = input("Enter your question: ")
         print("Delegating task to AI model...")
