@@ -2,24 +2,23 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from PIL import Image, ImageTk
 import speech_recognition as sr
+import webbrowser
 from core.weather import get_weather
 from core.news import get_news, categorize_news, summarize_text
 from core.ai_tasks import answer_question
 from core.desktop_ops import open_file, search_files
+from styles import apply_styles
 
 class AagniApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Aagni - AI-Powered Desktop Assistant")
         self.root.geometry("800x600")
+        apply_styles(self.root)
         self.create_widgets()
         self.animate_intro()
 
     def create_widgets(self):
-        self.style = ttk.Style()
-        self.style.configure("TLabel", font=("Helvetica", 12))
-        self.style.configure("TButton", font=("Helvetica", 12))
-
         self.intro_label = ttk.Label(self.root, text="🤖 Welcome to Aagni - Your AI-Powered Desktop Assistant! 🔥", font=("Helvetica", 16))
         self.intro_label.pack(pady=10)
 
@@ -56,6 +55,10 @@ class AagniApp:
         command = self.command_entry.get().lower()
         self.output_text.delete(1.0, tk.END)
         self.interpret_and_execute(command)
+
+        # Continuous conversation: Keep the input field ready for the next command
+        self.command_entry.delete(0, tk.END)
+        self.command_entry.focus()
 
     def voice_command(self):
         recognizer = sr.Recognizer()
@@ -99,10 +102,23 @@ class AagniApp:
             filename = self.prompt_user("Enter the filename to search for:")
             result = search_files(directory, filename)
             self.output_text.insert(tk.END, f"{result}\n")
+        elif "send a message" in command:
+            phone_number = self.prompt_user("Please specify the phone number with country code:")
+            message = self.prompt_user("What message would you like to send?")
+            whatsapp_url = f"https://wa.me/{phone_number}?text={message}"
+            self.output_text.insert(tk.END, "Opening WhatsApp to send your message.\n")
+            webbrowser.open(whatsapp_url)
+        elif "open youtube" in command:
+            self.output_text.insert(tk.END, "Opening YouTube...\n")
+            webbrowser.open("https://www.youtube.com")
         elif "exit" in command:
             self.root.quit()
         else:
             self.output_text.insert(tk.END, "Sorry, I didn't understand the command.\n")
+
+        # Keep the conversation going
+        self.command_entry.delete(0, tk.END)
+        self.command_entry.focus()
 
     def prompt_user(self, prompt):
         return simpledialog.askstring("Input", prompt)
